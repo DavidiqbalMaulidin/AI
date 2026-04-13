@@ -18,12 +18,11 @@ export default function CallbackPage() {
         return
       }
 
-      // 🔥 CEK APAKAH MODE RECOVERY
+      // 🔥 CEK USER
       const { data: userData } = await supabase.auth.getUser()
 
       const isRecovery =
-        userData?.user?.recovery_sent_at !== null ||
-        window.location.hash.includes('type=recovery')
+        userData?.user?.recovery_sent_at !== null
 
       if (isRecovery) {
         router.push('/reset-password')
@@ -37,8 +36,11 @@ export default function CallbackPage() {
   }, [])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black text-white">
-      Authenticating...
+    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white">
+      <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <p className="mt-4 text-zinc-400">
+        Authenticating your account...
+      </p>
     </div>
   )
 }
