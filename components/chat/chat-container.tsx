@@ -37,7 +37,7 @@ export function ChatContainer({ user, sessionId }: ChatContainerProps) {
   }, [messages])
 
   // =========================
-  // LOAD CHAT (FIX UTAMA)
+  // LOAD CHAT
   // =========================
   useEffect(() => {
     const loadChats = async () => {
@@ -50,10 +50,7 @@ export function ChatContainer({ user, sessionId }: ChatContainerProps) {
         const res = await fetch(`/api/get-chats?sessionId=${sessionId}`)
         const data = await res.json()
 
-        if (!Array.isArray(data)) {
-          console.error('Invalid chat data:', data)
-          return
-        }
+        if (!Array.isArray(data)) return
 
         const formatted = data.map((c: any) => ({
           id: c.id,
@@ -95,7 +92,6 @@ export function ChatContainer({ user, sessionId }: ChatContainerProps) {
 
       if (!activeSession) return
 
-      // USER UI
       const userMsg: Message = {
         id: Date.now().toString(),
         role: 'user',
@@ -105,7 +101,6 @@ export function ChatContainer({ user, sessionId }: ChatContainerProps) {
 
       setMessages((p) => [...p, userMsg])
 
-      // ASSISTANT PLACEHOLDER
       const assistantId = (Date.now() + 1).toString()
 
       setMessages((p) => [
@@ -118,7 +113,6 @@ export function ChatContainer({ user, sessionId }: ChatContainerProps) {
         },
       ])
 
-      // CALL AI
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -148,7 +142,6 @@ export function ChatContainer({ user, sessionId }: ChatContainerProps) {
         }
       }
 
-      // SAVE USER
       await fetch('/api/save-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -159,7 +152,6 @@ export function ChatContainer({ user, sessionId }: ChatContainerProps) {
         }),
       })
 
-      // SAVE AI
       await fetch('/api/save-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -177,33 +169,33 @@ export function ChatContainer({ user, sessionId }: ChatContainerProps) {
   }
 
   return (
-    <div className="flex h-screen bg-background">
-      <div className="flex flex-col flex-1">
+    // 🔥 FIX UTAMA: JANGAN h-screen DI SINI
+    <div className="flex flex-col flex-1 h-full bg-background">
 
-        <ChatHeader user={user} />
+      <ChatHeader user={user} />
 
-        <main className="flex-1 overflow-hidden">
-          {messages.length === 0 ? (
-            <WelcomeScreen
-              userName={user.email?.split('@')[0] || 'User'}
-              onQuickAction={(p) => handleSendMessage(p)}
-            />
-          ) : (
-            <ChatMessages
-              messages={messages}
-              isLoading={isLoading}
-            />
-          )}
-        </main>
+      {/* 🔥 FIX SCROLL AREA */}
+      <main className="flex-1 overflow-y-auto">
+        {messages.length === 0 ? (
+          <WelcomeScreen
+            userName={user.email?.split('@')[0] || 'User'}
+            onQuickAction={(p) => handleSendMessage(p)}
+          />
+        ) : (
+          <ChatMessages
+            messages={messages}
+            isLoading={isLoading}
+          />
+        )}
+      </main>
 
-        <div ref={messagesEndRef} />
+      <div ref={messagesEndRef} />
 
-        <ChatInput
-          onSendMessage={handleSendMessage}
-          isLoading={isLoading}
-        />
+      <ChatInput
+        onSendMessage={handleSendMessage}
+        isLoading={isLoading}
+      />
 
-      </div>
     </div>
   )
 }

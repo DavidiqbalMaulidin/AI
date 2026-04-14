@@ -24,11 +24,13 @@ export function ChatSidebar({
   const [sessions, setSessions] = useState<Session[]>([])
 
   // =========================
-  // LOAD SESSIONS (FIXED + REFRESHABLE)
+  // LOAD SESSIONS
   // =========================
   const loadSessions = async () => {
     try {
-      const res = await fetch('/api/chat-session')
+      const res = await fetch('/api/chat-session', {
+        cache: 'no-store',
+      })
       const data = await res.json()
       setSessions(Array.isArray(data) ? data : [])
     } catch (err) {
@@ -40,19 +42,17 @@ export function ChatSidebar({
     loadSessions()
   }, [])
 
-  // =========================
-  // AUTO REFRESH SAAT ACTIVE CHANGE
-  // =========================
-  useEffect(() => {
-    loadSessions()
-  }, [activeId])
+  // ❌ PERUBAHAN PENTING: HAPUS auto reload dari activeId
+  // useEffect(() => {
+  //   loadSessions()
+  // }, [activeId])
 
   // =========================
   // HANDLE NEW CHAT
   // =========================
   const handleNewChat = async () => {
     await onNewChat()
-    loadSessions() // 🔥 refresh sidebar langsung
+    loadSessions()
   }
 
   return (
@@ -86,69 +86,71 @@ export function ChatSidebar({
           </p>
         )}
 
-       {sessions.map((s) => (
-  <div
-    key={s.id}
-    className="flex items-center justify-between gap-2 bg-white/5 hover:bg-white/10 rounded-xl p-3"
-  >
-    {/* CLICK CHAT */}
-    <div
-      onClick={() => onSelect(s.id)}
-      className="flex-1 cursor-pointer"
-    >
-      {collapsed ? '💬' : `📘 ${s.title}`}
-    </div>
+        {sessions.map((s) => (
+          <div
+            key={s.id}
+            className="flex items-center justify-between gap-2 bg-white/5 hover:bg-white/10 rounded-xl p-3"
+          >
+            {/* CLICK CHAT */}
+            <div
+              onClick={() => onSelect(s.id)}
+              className="flex-1 cursor-pointer"
+            >
+              {collapsed ? '💬' : `📘 ${s.title}`}
+            </div>
 
-    {/* ACTIONS */}
-    {!collapsed && (
-      <div className="flex gap-2 text-xs">
-        
-        {/* EDIT */}
-        <button
-          onClick={async () => {
-            const newTitle = prompt('Edit judul:', s.title)
-            if (!newTitle) return
+            {/* ACTIONS */}
+            {!collapsed && (
+              <div className="flex gap-2 text-xs">
 
-            await fetch('/api/chat-session/update', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                sessionId: s.id,
-                title: newTitle,
-              }),
-            })
+                {/* EDIT */}
+                <button
+                  onClick={async () => {
+                    const newTitle = prompt('Edit judul:', s.title)
+                    if (!newTitle) return
 
-            loadSessions()
-          }}
-          className="text-yellow-400 hover:text-yellow-300"
-        >
-          ✏️
-        </button>
+                    await fetch('/api/chat-session/update', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        sessionId: s.id,
+                        title: newTitle,
+                      }),
+                    })
 
-        {/* DELETE */}
-        <button
-          onClick={async () => {
-            if (!confirm('Hapus chat ini?')) return
+                    loadSessions()
+                  }}
+                  className="text-yellow-400 hover:text-yellow-300"
+                >
+                  ✏️
+                </button>
 
-            await fetch('/api/chat-session/delete', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                sessionId: s.id,
-              }),
-            })
+                {/* DELETE */}
+                <button
+                  onClick={async () => {
+                    if (!confirm('Hapus chat ini?')) return
 
-            loadSessions()
-          }}
-          className="text-red-400 hover:text-red-300"
-        >
-          🗑
-        </button>
+                    await fetch('/api/chat-session/delete', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        sessionId: s.id,
+                      }),
+                    })
 
-      </div>
-    )}
-  </div>
-))}
+                    setSessions(prev =>
+                      prev.filter(item => item.id !== s.id)
+                    )
+                  }}
+                  className="text-red-400 hover:text-red-300"
+                >
+                  🗑
+                </button>
+
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   )

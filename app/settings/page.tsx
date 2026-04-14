@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 export default function SettingsPage() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [resetting, setResetting] = useState(false)
 
   const router = useRouter()
   const supabase = createClient()
@@ -38,6 +39,24 @@ export default function SettingsPage() {
     )
   }
 
+  // 🔥 RESET PASSWORD LANGSUNG DI SINI
+  const handleResetPassword = async () => {
+    setResetting(true)
+
+    const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    })
+
+    setResetting(false)
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    alert('Cek email kamu untuk reset password')
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-zinc-950 to-black text-white p-10">
 
@@ -54,7 +73,6 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        {/* BACK BUTTON */}
         <button
           onClick={() => router.push('/chat')}
           className="px-4 py-2 rounded-lg border border-zinc-700 hover:border-blue-500 hover:text-blue-400 transition"
@@ -119,11 +137,13 @@ export default function SettingsPage() {
             Security
           </h2>
 
+          {/* 🔥 RESET PASSWORD FIX */}
           <button
-            onClick={() => router.push('/profile')}
+            onClick={handleResetPassword}
+            disabled={resetting}
             className="w-full bg-pink-600 hover:bg-pink-500 p-2 rounded transition"
           >
-            Reset Password
+            {resetting ? 'Mengirim email...' : 'Reset Password'}
           </button>
 
           <button

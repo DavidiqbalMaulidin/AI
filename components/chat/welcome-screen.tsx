@@ -26,7 +26,6 @@ const quickActions = [
     prompt: 'Jelaskan apa itu algoritma dan berikan contoh pseudocode sederhana untuk mencari nilai terbesar dalam array',
     color: 'from-indigo-500 to-blue-500',
   },
-
   {
     icon: Globe,
     label: 'Bahasa Inggris',
@@ -34,6 +33,21 @@ const quickActions = [
     color: 'from-orange-500 to-amber-500',
   },
 
+  // =========================
+  // 🔥 TAMBAHAN 2 MATAKULIAH
+  // =========================
+  {
+    icon: FlaskConical,
+    label: 'Fisika',
+    prompt: 'Jelaskan hukum Newton 1, 2, dan 3 beserta contoh penerapannya dalam kehidupan sehari-hari',
+    color: 'from-green-500 to-emerald-500',
+  },
+  {
+    icon: PenTool,
+    label: 'Sejarah',
+    prompt: 'Jelaskan sejarah singkat kemerdekaan Indonesia dan tokoh-tokoh penting di dalamnya',
+    color: 'from-red-500 to-orange-500',
+  },
 ]
 
 export function WelcomeScreen({ userName, onQuickAction }: WelcomeScreenProps) {

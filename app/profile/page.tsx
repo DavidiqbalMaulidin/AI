@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Menu, X } from 'lucide-react'
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null)
@@ -13,6 +14,9 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('profile')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+
+  // 🔥 NEW: MOBILE SIDEBAR STATE
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const router = useRouter()
   const supabase = createClient()
@@ -38,7 +42,6 @@ export default function ProfilePage() {
     setIsChanged(name !== originalName)
   }, [name, originalName])
 
-  // LOADING STATE
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black text-white">
@@ -55,7 +58,6 @@ export default function ProfilePage() {
     )
   }
 
-  // UPDATE NAME (SAFE)
   const updateName = async () => {
     if (!isChanged) return
 
@@ -78,7 +80,6 @@ export default function ProfilePage() {
     alert('Nama berhasil diupdate')
   }
 
-  // RESET PASSWORD
   const resetPassword = async () => {
     const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
       redirectTo: `${window.location.origin}/auth/callback`,
@@ -90,12 +91,26 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-black text-white">
+    <div className="min-h-screen flex flex-col md:flex-row bg-black text-white">
+
+      {/* 🔥 MOBILE TOP BAR */}
+      <div className="md:hidden flex items-center justify-between p-4 border-b border-zinc-800">
+        <h1 className="font-bold text-blue-400">IqDav AI</h1>
+
+        <button onClick={() => setSidebarOpen(!sidebarOpen)}>
+          {sidebarOpen ? <X /> : <Menu />}
+        </button>
+      </div>
 
       {/* SIDEBAR */}
-      <div className="w-64 bg-zinc-950 border-r border-zinc-800 p-4 space-y-4">
-
-        <h1 className="text-xl font-bold text-blue-400">
+      <div
+        className={`
+          bg-zinc-950 border-r border-zinc-800 p-4 space-y-4
+          w-64 md:block
+          ${sidebarOpen ? 'block' : 'hidden md:block'}
+        `}
+      >
+        <h1 className="text-xl font-bold text-blue-400 hidden md:block">
           IqDav AI
         </h1>
 
@@ -121,17 +136,16 @@ export default function ProfilePage() {
           Security
         </button>
 
-
         <button
           onClick={() => router.push('/chat')}
           className="w-full mt-10 border border-zinc-700 hover:border-blue-500 p-2 rounded"
         >
-           Back to Chat
+          Back to Chat
         </button>
       </div>
 
       {/* CONTENT */}
-      <div className="flex-1 p-10 bg-gradient-to-br from-black via-zinc-950 to-black">
+      <div className="flex-1 p-4 md:p-10 bg-gradient-to-br from-black via-zinc-950 to-black overflow-y-auto">
 
         {/* PROFILE TAB */}
         {activeTab === 'profile' && (
@@ -143,18 +157,15 @@ export default function ProfilePage() {
 
             <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
 
-              {/* AVATAR */}
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-pink-500 flex items-center justify-center font-bold text-lg">
                 {user.email?.charAt(0).toUpperCase()}
               </div>
 
-              {/* INFO */}
               <div className="text-sm space-y-1">
                 <p><span className="text-blue-400">Email:</span> {user.email}</p>
                 <p><span className="text-pink-400">User ID:</span> {user.id}</p>
               </div>
 
-              {/* NAME INPUT */}
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -162,7 +173,6 @@ export default function ProfilePage() {
                 className="w-full p-2 rounded bg-black border border-zinc-700 focus:border-blue-500 outline-none"
               />
 
-              {/* BUTTON */}
               <button
                 onClick={updateName}
                 disabled={!isChanged || saving}

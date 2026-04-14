@@ -10,9 +10,9 @@ export default function ChatLayout({ user }: { user: User }) {
   const [activeSession, setActiveSession] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState(false)
 
-  // =========================
-  // NEW CHAT HANDLER
-  // =========================
+  // 🔥 PERUBAHAN 1: FIX MOBILE SAFETY STATE (opsional tapi aman)
+  const [mobileFix] = useState(true)
+
   const handleNewChat = async () => {
     try {
       const res = await fetch('/api/chat-session', {
@@ -24,27 +24,23 @@ export default function ChatLayout({ user }: { user: User }) {
       const data = await res.json()
 
       if (data?.id) {
-        setActiveSession(data.id) // switch ke session baru
+        setActiveSession(data.id)
       }
     } catch (err) {
       console.error('new chat error:', err)
     }
   }
 
-  // =========================
-  // SELECT SESSION
-  // =========================
   const handleSelectSession = (id: string) => {
     setActiveSession(id)
   }
 
-  // =========================
-  // AUTO SELECT FIRST SESSION (optional tapi penting UX)
-  // =========================
   useEffect(() => {
     const loadFirstSession = async () => {
       try {
-        const res = await fetch('/api/chat-session')
+        const res = await fetch('/api/chat-session', {
+          cache: 'no-store', // 🔥 FIX IMPORTANT
+        })
         const data = await res.json()
 
         if (Array.isArray(data) && data.length > 0 && !activeSession) {
@@ -59,11 +55,13 @@ export default function ChatLayout({ user }: { user: User }) {
   }, [])
 
   return (
-    <div className="h-screen flex bg-black text-white">
+    <div className="h-screen flex bg-black text-white overflow-hidden">
 
-      {/* SIDEBAR */}
+      {/* =========================
+          SIDEBAR
+      ========================= */}
       <div
-        className={`border-r border-white/10 transition-all duration-300 ${
+        className={`border-r border-white/10 transition-all duration-300 flex-shrink-0 ${
           collapsed ? 'w-20' : 'w-72'
         }`}
       >
@@ -75,8 +73,10 @@ export default function ChatLayout({ user }: { user: User }) {
         />
       </div>
 
-      {/* MAIN AREA */}
-      <div className="flex-1 flex flex-col">
+      {/* =========================
+          MAIN AREA
+      ========================= */}
+      <div className="flex-1 flex flex-col min-w-0">
 
         {/* TOP BAR */}
         <div className="h-12 flex items-center px-3 border-b border-white/10">
@@ -89,11 +89,13 @@ export default function ChatLayout({ user }: { user: User }) {
         </div>
 
         {/* CHAT */}
-        <ChatContainer
-          key={activeSession}   // 🔥 INI FIX PENTING BIAR RELOAD CHAT
-          user={user}
-          sessionId={activeSession}
-        />
+        <div className="flex-1 overflow-hidden">
+          <ChatContainer
+            key={activeSession}
+            user={user}
+            sessionId={activeSession}
+          />
+        </div>
 
       </div>
     </div>

@@ -22,10 +22,6 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
   const [isDragging, setIsDragging] = useState(false)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-
-  // =========================
-  // FILE INPUT REF (FIX)
-  // =========================
   const fileRef = useRef<HTMLInputElement>(null)
   const imageRef = useRef<HTMLInputElement>(null)
 
@@ -41,28 +37,16 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
     adjustTextareaHeight()
   }, [message])
 
-  // =========================
-  // TXT FILE
-  // =========================
   const handleFileChange = async (file: File) => {
-    if (!file.name.endsWith('.txt')) {
-      alert('Hanya file .txt')
-      return
-    }
+    if (!file.name.endsWith('.txt')) return alert('Hanya file .txt')
 
     const text = await file.text()
     setFileText(text)
     setFileName(file.name)
   }
 
-  // =========================
-  // IMAGE OCR
-  // =========================
   const handleImageFile = async (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      alert('Hanya gambar')
-      return
-    }
+    if (!file.type.startsWith('image/')) return alert('Hanya gambar')
 
     setImageName(file.name)
     setImagePreview(URL.createObjectURL(file))
@@ -71,45 +55,6 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
     setImageText(result.data.text)
   }
 
-  // =========================
-  // DRAG
-  // =========================
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }
-
-  const handleDragLeave = () => {
-    setIsDragging(false)
-  }
-
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-
-    const file = e.dataTransfer.files?.[0]
-    if (!file) return
-
-    if (file.type.startsWith('image/')) {
-      await handleImageFile(file)
-    } else if (file.name.endsWith('.txt')) {
-      await handleFileChange(file)
-    } else {
-      alert('File tidak didukung')
-    }
-  }
-
-  const clearAll = () => {
-    setFileText('')
-    setFileName('')
-    setImagePreview('')
-    setImageText('')
-    setImageName('')
-  }
-
-  // =========================
-  // SUBMIT (FIX OCR + FILE MERGE)
-  // =========================
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -118,12 +63,16 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
     const finalMessage =
       message +
       (fileText ? `\n\n[FILE TXT]: ${fileText}` : '') +
-      (imageText ? `\n\n[TEXT DARI GAMBAR]: ${imageText}` : '')
+      (imageText ? `\n\n[TEXT GAMBAR]: ${imageText}` : '')
 
     onSendMessage(finalMessage, fileText)
 
     setMessage('')
-    clearAll()
+    setFileText('')
+    setFileName('')
+    setImagePreview('')
+    setImageText('')
+    setImageName('')
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -134,18 +83,10 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
   }
 
   return (
-    <div
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      className={`border-t p-4 transition-all ${
-        isDragging
-          ? 'bg-blue-500/10 border-blue-500'
-          : 'bg-card/80 border-border'
-      }`}
-    >
+    // 🔥 FIX 1: STICKY + SAFE AREA + Z-INDEX
+    <div className="sticky bottom-0 z-50 border-t p-3 sm:p-4 bg-background/90 backdrop-blur-md border-border pb-[env(safe-area-inset-bottom)]">
 
-      {/* FILE INPUT HIDDEN (FIX) */}
+      {/* hidden inputs */}
       <input
         ref={fileRef}
         type="file"
@@ -157,7 +98,6 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
         }}
       />
 
-      {/* IMAGE INPUT HIDDEN (FIX) */}
       <input
         ref={imageRef}
         type="file"
@@ -169,26 +109,21 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
         }}
       />
 
-      <form className="max-w-3xl mx-auto space-y-2" onSubmit={handleSubmit}>
+      <form
+        className="max-w-3xl mx-auto"
+        onSubmit={handleSubmit}
+      >
 
         {/* INPUT BOX */}
-        <div className="flex items-end gap-2 p-3 rounded-2xl bg-secondary border border-border">
+        <div className="flex items-end gap-2 p-3 rounded-2xl bg-secondary border border-border relative z-10">
 
-          {/* 📎 BUTTON FIX */}
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            className="p-2"
-          >
+          {/* FILE */}
+          <button type="button" onClick={() => fileRef.current?.click()} className="p-2">
             <Paperclip className="w-5 h-5 text-muted-foreground" />
           </button>
 
-          {/* 🖼 BUTTON FIX */}
-          <button
-            type="button"
-            onClick={() => imageRef.current?.click()}
-            className="p-2"
-          >
+          {/* IMAGE */}
+          <button type="button" onClick={() => imageRef.current?.click()} className="p-2">
             <ImageIcon className="w-5 h-5 text-muted-foreground" />
           </button>
 
@@ -198,14 +133,10 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={
-              isDragging
-                ? 'Drop file di sini...'
-                : 'Tanya apa saja ke IqDav...'
-            }
+            placeholder={isDragging ? 'Drop file...' : 'Tanya apa saja...'}
             rows={1}
             disabled={isLoading}
-            className="flex-1 bg-transparent outline-none resize-none px-2 py-1"
+            className="flex-1 bg-transparent outline-none resize-none px-2 py-1 max-h-40 overflow-y-auto"
           />
 
           {/* SEND */}
@@ -217,21 +148,22 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
           >
             <Send />
           </Button>
+
         </div>
 
-        {/* PREVIEW */}
+        {/* PREVIEW (FIX: NO LAYOUT JUMP) */}
         {(fileName || imagePreview) && (
-          <div className="flex gap-2 flex-wrap">
+          <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
 
             {fileName && (
-              <div className="px-3 py-1 bg-zinc-800 text-green-400 rounded-full text-xs flex items-center gap-2">
+              <div className="px-3 py-1 bg-zinc-800 text-green-400 rounded-full text-xs flex items-center gap-2 whitespace-nowrap">
                 📄 {fileName}
                 <X size={14} onClick={() => setFileName('')} />
               </div>
             )}
 
             {imagePreview && (
-              <div className="relative">
+              <div className="relative shrink-0">
                 <img
                   src={imagePreview}
                   className="w-12 h-12 rounded object-cover"
@@ -247,7 +179,7 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
           </div>
         )}
 
-        <p className="text-center text-xs text-muted-foreground">
+        <p className="text-center text-xs text-muted-foreground mt-2">
           Drop file / image langsung ke sini 🔥
         </p>
 
